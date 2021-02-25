@@ -1,0 +1,8 @@
+{
+    "python.analysis.extraPaths": [
+        "./albacore",
+        "./sardine",
+        "./anchovy"
+    ],
+    "python.pythonPath": "C:\\Users\\cbiafore\\AppData\\Local\\Microsoft\\WindowsApps\\python.exe"
+}

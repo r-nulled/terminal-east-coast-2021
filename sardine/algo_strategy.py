@@ -1,12 +1,9 @@
-from .gamelib import GameState
 import gamelib
 import random
 import math
 import warnings
 from sys import maxsize
 import json
-
-from util.board_predictor import Predictor
 
 
 """
@@ -29,6 +26,37 @@ class AlgoStrategy(gamelib.AlgoCore):
         random.seed(seed)
         gamelib.debug_write('Random seed: {}'.format(seed))
 
+    def remove_to_rebuild(self, util, locations, threshold):
+        to_rebuild = []
+        for location in locations:
+            unit = util.game_state.contains_stationary_unit(location)
+            if unit and unit.health < unit.max_health * threshold:
+                to_rebuild.append(unit)
+                util.remove(location)
+
+        return to_rebuild
+
+    def rebuild(self, util, units_to_rebuild):
+        u_t_r = [x for x in units_to_rebuild]
+
+        for unit in units_to_rebuild:
+            location = [unit.x, unit.y]
+            if unit.unit_type is TURRET:
+                spawn = util.turret
+            elif unit.unit_type is WALL:
+                spawn = util.wall
+
+            rebuild_success = spawn(location)
+            if unit.upgraded:
+                if util.upgrade(location):
+                    # Remove unit from rebuild after successfully building
+                    u_t_r.remove(unit)
+            else:
+                if rebuild_success:
+                    # Remove unit from rebuild after successfully building
+                    u_t_r.remove(unit)
+        return u_t_r
+
     def on_game_start(self, config):
         """ 
         Read in config and perform any initial setup here 
@@ -46,10 +74,8 @@ class AlgoStrategy(gamelib.AlgoCore):
         SP = 0
         # This is a good place to do initial setup
         self.scored_on_locations = []
-        self.predictor = Predictor(config)
-        self.projected_map = None
 
-    def on_turn(self, turn_state: GameState):
+    def on_turn(self, turn_state):
         """
         This function is called every turn with the game state wrapper as
         an argument. The wrapper stores the state of the arena and has methods
@@ -60,18 +86,20 @@ class AlgoStrategy(gamelib.AlgoCore):
         game_state = gamelib.GameState(self.config, turn_state)
         gamelib.debug_write('Performing turn {} of your custom algo strategy'.format(game_state.turn_number))
         game_state.suppress_warnings(True)  #Comment or remove this line to enable warnings.
-        self.projected_map, sureness = self.predictor.predict_map()
-        if not self.projected_map:
-            self.projected_map = turn_state.game_map
-        gamelib.debug_write("Predicted with sureness level %d" % sureness)
-        ####### Strategy here
-        
 
-        ###### Submit Turn
+        self.starter_strategy(game_state)
+
         game_state.submit_turn()
 
 
-   
+    """
+    NOTE: All the methods after this point are part of the sample starter-algo
+    strategy and can safely be replaced for your custom algo.
+    """
+
+    def starter_strategy(self, game_state):
+        return
+
     def on_action_frame(self, turn_string):
         """
         This is the action frame of the game. This function could be called 
@@ -82,7 +110,6 @@ class AlgoStrategy(gamelib.AlgoCore):
         # Let's record at what position we get scored on
         state = json.loads(turn_string)
         
-        self.predictor.update(state)
 
 if __name__ == "__main__":
     algo = AlgoStrategy()

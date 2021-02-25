@@ -1,12 +1,11 @@
-from typing import overload, Any
 import numpy as np
 from numpy.linalg import norm
 
-from gamelib import GameUnit, GameMap
+from gamelib import GameState, GameUnit, GameMap
 
 
 class Predictor:
-    _ENEMY_BOARD = [(a, b + 14) for b in range(14) for a in range(b, 28 - b)]
+    _ENEMY_BOARD = locations = [(a, b + 14) for b in range(14) for a in range(b, 28 - b)]
 
     def __init__(self, config):
         self.config = config
@@ -20,48 +19,28 @@ class Predictor:
         self._INDEX_UNIT = {1 : WALL,2 : SUPPORT,3 : TURRET}
 
         self._past_boards_dict = {}
-        self._last_turn_removals = None
-
-        self.turns_processed = -1
+        self._pending_removals = None
 
     
-    def predict_map(self) -> tuple[GameMap, float]:
+    def predict_builds(self) -> GameMap:
         # returns None if no good prediction
         max_sim, map_prediction = 0, None
-        max_sim = self._cos_sim([0] * (28 * 14), self._last_turn_removals)
+        max_sim = self._cos_sim([0] * (28 * 14), self._pending_removals)
         for removals, game_map in self._past_boards_dict.items():
-            cos_sim = self._cos_sim(list(removals), self._last_turn_removals)
+            cos_sim = self._cos_sim(removals, self._pending_removals)
             if cos_sim > max_sim:
-                max_sim = cos_sim
                 map_prediction = game_map
-        if map_prediction:
-            return (self._deserialize_game_map(map_prediction), max_sim)
-        return (None, max_sim)
 
-    def update(self, state) -> None:
-        if state["turnInfo"][2] < 0:
-            return
-        if state["turnInfo"][1] == (self.turns_processed):
-            return
-        else:
-            self.turns_processed += 1
+        return self._deserialize_game_map(map_prediction)
 
-
-        if self._last_turn_removals:
-            max_sim = zero_sim = self._cos_sim([0] * (28 * 14), self._last_turn_removals)
-            best_key = self._last_turn_removals
-            for removals, game_map in self._past_boards_dict.items():
-                cos_sim = self._cos_sim(list(removals), self._last_turn_removals)
-                if cos_sim > max_sim and cos_sim > zero_sim:
-                    max_sim = cos_sim
-                    best_key = removals
-             
-
-            serialized_state = self._serialize_json_p2Units(state["p2Units"])
-            self._past_boards_dict[tuple(best_key)] = serialized_state
+    def end_update(self, state: GameState) -> None:
+        if self._pending_removals:
+            serialized_state = self._serialize_game_map(state.game_map)
+            self._past_boards_dict[self._pending_removals] = serialized_state
         
-        current_removals = self._removals(state["p2Units"][6])
-        self._last_turn_removals = self._serialize_tuple_set(current_removals)
+        current_removals = self._removals(state.game_map)
+        self._pending_removals = self._serialize_tuple_set(current_removals)
+
         return
     
     
@@ -74,10 +53,6 @@ class Predictor:
         
         return set(tup for tup in filter(_pending_removal, self._ENEMY_BOARD))
 
-    @overload
-    def _removals(self, removals: list[list[Any]]) -> set[tuple[int, int]]:
-        removal_loc = [(x[0], x[1]) for x in removals]
-        return set(removal_loc)
 
     # deprecated
     def _builds(self, past: GameMap, current: GameMap) -> set[tuple[tuple[int, int], GameUnit]]:
@@ -108,18 +83,6 @@ class Predictor:
                 new_array[28 * x + 14 * y] = 1
 
         return new_array
-    
-    def _serialize_json_p2Units(self, json):
-        upgrades = set([(x, y) for x, y in json[7][:2]])
-        array = [0] * (28 * 14)
-        for ind, unit_array in enumerate(json[:3]):
-            for x, y in unit_array[:2]:
-                if (x, y) in upgrades:
-                    val = 0 - ind - 1
-                else:
-                    val = ind + 1
-                array[28 * y + x] = val
-        return array
 
     def _serialize_game_map(self, game_map):
         def serialization_map(loc):
