@@ -6,7 +6,7 @@ from .utilities import Utilities
 
 Coord = list[int, int]
 
-class StrategyBuilder(object):
+class StrategyBuilder:
     OP_DEFAULTS = {
             "spawns" : {
                 "turrets" : [], # list or function returning list
@@ -95,8 +95,11 @@ class StrategyBuilder(object):
     def _remove(self, locations):
         if isinstance(locations, list):
             self.game_state.attempt_remove(locations)
+            self.util.remove_from_repair(locations)
         else:
-            self.game_state.attempt_remove(locations(self.game_state.game_map))
+            locs = locations(self.game_state.game_map)
+            self.game_state.attempt_remove(locs)
+            self.util.remove_from_repair(locs)
 
     def _repair(self, repair_bool):
         if repair_bool:

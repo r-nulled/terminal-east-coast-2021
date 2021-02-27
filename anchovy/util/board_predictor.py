@@ -4,7 +4,7 @@ from numpy.linalg import norm
 from gamelib import GameState, GameUnit, GameMap
 
 
-class Predictor(object):
+class Predictor:
     _ENEMY_BOARD = locations = [(a, b + 14) for b in range(14) for a in range(b, 28 - b)]
 
     def __init__(self, config):

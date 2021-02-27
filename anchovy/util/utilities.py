@@ -27,6 +27,10 @@ class Utilities(object):
                             to_build.add(unit)
         
         self.memory["repair"]["to_build"] = to_build
+    
+    def remove_from_repair(self, locations):
+        for loc in locations:
+            self.memory["repair"]["to_build"].discard(loc)
 
 
             
