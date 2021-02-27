@@ -65,9 +65,10 @@ class Anchovy(object):
             "attack_right" : [attack_right]
         }
 
-        self.strategy.compile(spec)
+        self.strategy = StrategyBuilder().compile(spec)
 
-    def turn():
+    def turn(game_state):
         # define state machine
+        # call function "self.strategy["base"](game_state)
         pass
 
