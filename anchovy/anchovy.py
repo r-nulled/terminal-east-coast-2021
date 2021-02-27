@@ -1,17 +1,73 @@
 from .gamelib import GameState, GameMap, GameUnit
 
-
-from .util import Utilities, StrategyBuilder
+from .util.strategy_builder import StrategyBuilder
 
 Coord = list[int, int]
 
 class Anchovy(object):
     def __init__(self):
-        self.sb = StrategyBuilder()
+        self.strategy = StrategyBuilder()
 
-def turn():
-    turn_status = 1
-    while (turn_status):
+        base = {
+            "spawns" : {
+                "turrets" : [], # list or function returning list
+                "supports" : [],
+                "walls" : []
+            },
+            "builds" : {
+                "scouts": [],
+                "demolishers" : [],
+                "interceptors" : []
+            },
+            "upgrades" : [],
+            "removes" : [],
+            "repair" : False,
+        }
+
+        attack_left = {
+            "spawns" : {
+                "turrets" : [], # list or function returning list
+                "supports" : [],
+                "walls" : []
+            },
+            "builds" : {
+                "scouts": [],
+                "demolishers" : [],
+                "interceptors" : []
+            },
+            "upgrades" : [],
+            "removes" : [],
+            "repair" : False,
+        }
+
+        attack_right = {
+            "spawns" : {
+                "turrets" : [], # list or function returning list
+                "supports" : [],
+                "walls" : []
+            },
+            "builds" : {
+                "scouts": [],
+                "demolishers" : [],
+                "interceptors" : []
+            },
+            "upgrades" : [],
+            "removes" : [],
+            "repair" : False,
+        }
+
+        # can add more functions
+        # etc 
+
+        spec = {
+            "base" : [base],
+            "attack_left": [attack_left],
+            "attack_right" : [attack_right]
+        }
+
+        self.strategy.compile(spec)
+
+    def turn():
+        # define state machine
         pass
-
 

@@ -28,7 +28,7 @@ class StrategyBuilder:
         self.game_state = None
         self.util = Utilities()
     
-    def create(self, plan):
+    def compile(self, plan):
         for func_name, spec in plan.items():
             self._create_function(func_name, spec)
         
