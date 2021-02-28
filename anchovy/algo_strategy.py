@@ -5,7 +5,7 @@ import warnings
 from sys import maxsize
 import json
 
-import anchovy
+from anchovy import Anchovy
 
 """
 Most of the algo code you write will be in this file unless you create new
@@ -27,36 +27,6 @@ class AlgoStrategy(gamelib.AlgoCore):
         random.seed(seed)
         gamelib.debug_write('Random seed: {}'.format(seed))
 
-    def remove_to_rebuild(self, util, locations, threshold):
-        to_rebuild = []
-        for location in locations:
-            unit = util.game_state.contains_stationary_unit(location)
-            if unit and unit.health < unit.max_health * threshold:
-                to_rebuild.append(unit)
-                util.remove(location)
-
-        return to_rebuild
-
-    def rebuild(self, util, units_to_rebuild):
-        u_t_r = [x for x in units_to_rebuild]
-
-        for unit in units_to_rebuild:
-            location = [unit.x, unit.y]
-            if unit.unit_type is TURRET:
-                spawn = util.turret
-            elif unit.unit_type is WALL:
-                spawn = util.wall
-
-            rebuild_success = spawn(location)
-            if unit.upgraded:
-                if util.upgrade(location):
-                    # Remove unit from rebuild after successfully building
-                    u_t_r.remove(unit)
-            else:
-                if rebuild_success:
-                    # Remove unit from rebuild after successfully building
-                    u_t_r.remove(unit)
-        return u_t_r
 
     def on_game_start(self, config):
         """ 
@@ -74,6 +44,7 @@ class AlgoStrategy(gamelib.AlgoCore):
         MP = 1
         SP = 0
         # This is a good place to do initial setup
+        self.anchovy = Anchovy(config)
         self.scored_on_locations = []
 
     def on_turn(self, turn_state):
@@ -99,6 +70,7 @@ class AlgoStrategy(gamelib.AlgoCore):
     """
 
     def starter_strategy(self, game_state):
+        self.anchovy.turn(game_state)
         return
 
     def on_action_frame(self, turn_string):

@@ -23,7 +23,7 @@ class Utilities(object):
                     unit = game_map[x,y][0]
                     repair = (unit.health / unit.max_health) < (base if unit.upgraded else upgraded)
                     if repair and (unit.x, unit.y) not in potentially_in_progress:
-                        if self.game_state.attempt_remove([x,y]):
+                        if game_state.attempt_remove([x,y]):
                             to_build.add(unit)
         
         self.memory["repair"]["to_build"] = to_build
